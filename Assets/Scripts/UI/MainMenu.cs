@@ -7,7 +7,6 @@ public class MainMenu : MonoBehaviour
 {
     public void NewGame()
     {
-        LevelManager.LoadSceneAsync("CharacterCreation");
-
+        LevelManager.Instance.LoadNewGame();
     }
 }
