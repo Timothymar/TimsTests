@@ -40,6 +40,58 @@ public class KingdomData : MonoBehaviour
     [SerializeField] private TMP_Text CharacterSubrace;
     [SerializeField] private TMP_Text CharacterSubraceInfo;
 
+    private KingdomRace selectedKingdom = KingdomRace.Dog;
+    private CharacterSize selectedSize = CharacterSize.Medium;
+
+    // ---- UI THUMBNAILS (the 3 images you show on Character Creation) ----
+    [SerializeField] private Image[] sizePortraitSlots; // left=Small, middle=Medium, right=Large
+
+    // Per-kingdom portrait sprites (thumbnails)
+    [SerializeField] private Sprite birdSmallSprite;
+    [SerializeField] private Sprite birdMediumSprite;
+    [SerializeField] private Sprite birdLargeSprite;
+
+    [SerializeField] private Sprite catSmallSprite;
+    [SerializeField] private Sprite catMediumSprite;
+    [SerializeField] private Sprite catLargeSprite;
+
+    [SerializeField] private Sprite dogSmallSprite;
+    [SerializeField] private Sprite dogMediumSprite;
+    [SerializeField] private Sprite dogLargeSprite;
+
+    [SerializeField] private Sprite reptileSmallSprite;
+    [SerializeField] private Sprite reptileMediumSprite;
+    [SerializeField] private Sprite reptileLargeSprite;
+
+    [SerializeField] private Sprite monkeySmallSprite;
+    [SerializeField] private Sprite monkeyMediumSprite;
+    [SerializeField] private Sprite monkeyLargeSprite;
+
+    // Prefabs for Character Models
+    [Header("Prefabs by Kingdom and Size")]
+    [SerializeField] private GameObject birdSmall;
+    [SerializeField] private GameObject birdMedium;
+    [SerializeField] private GameObject birdLarge;
+
+    [SerializeField] private GameObject catSmall;
+    [SerializeField] private GameObject catMedium;
+    [SerializeField] private GameObject catLarge;
+
+    [SerializeField] private GameObject dogSmall;
+    [SerializeField] private GameObject dogMedium;
+    [SerializeField] private GameObject dogLarge;
+
+    [SerializeField] private GameObject reptileSmall;
+    [SerializeField] private GameObject reptileMedium;
+    [SerializeField] private GameObject reptileLarge;
+
+    [SerializeField] private GameObject monkeySmall;
+    [SerializeField] private GameObject monkeyMedium;
+    [SerializeField] private GameObject monkeyLarge;
+
+    // Character Preview
+    [SerializeField] private Transform PreviewModelSpot;
+
     //[SerializeField] private GameObject ClassSelector;
     //[SerializeField] private GameObject ClassSelectorCanvas;
     //[SerializeField] private TMP_Text ClassName;
@@ -54,9 +106,10 @@ public class KingdomData : MonoBehaviour
 
     public void OnKingdomButtonClick(int kingdomIndex)
     {
-        KingdomRace selected = (KingdomRace)kingdomIndex;
-        SelectKingdom(selected);
+        selectedKingdom = (KingdomRace)kingdomIndex;   // store it
+        SelectKingdom(selectedKingdom);                // still update the overview text
     }
+
 
     private void SelectKingdom(KingdomRace race)
     {
@@ -134,6 +187,9 @@ public class KingdomData : MonoBehaviour
             currentStep = CreationStep.CharacterCreation;
             CharacterSelectorCanvas.SetActive(true);
             KingdomSelectionCanvas.SetActive(false);
+
+            PopulateSizeThumbnails(selectedKingdom); // <-- NEW: swap images to Bird/Cat/Dog...
+            ClearPreview(); // optional: clear any old model
         }
         //else if (currentStep == CreationStep.CharacterCreation)
         //{
@@ -169,4 +225,91 @@ public class KingdomData : MonoBehaviour
     //    characterCustomizationCanvas.SetActive(true);
     //    currentStep = CreationStep.CharacterCustomization;
     //}
+
+    // Hook these to your three UI buttons: Small / Medium / Large
+    public void OnSelectSmall() { SelectSize(CharacterSize.Small); }
+    public void OnSelectMedium() { SelectSize(CharacterSize.Medium); }
+    public void OnSelectLarge() { SelectSize(CharacterSize.Large); }
+
+    private void SelectSize(CharacterSize size)
+    {
+        selectedSize = size;
+        SpawnSelectedModel();
+    }
+
+    // Spawns the prefab that matches (selectedKingdom, selectedSize) at previewAnchor
+    private void SpawnSelectedModel()
+    {
+        ClearPreview();
+        var prefab = GetPrefab(selectedKingdom, selectedSize);
+        if (prefab != null && PreviewModelSpot != null)
+        {
+            var go = Instantiate(prefab, PreviewModelSpot);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+        }
+
+        // (Optional) update right-side text panel
+        if (CharacterSubrace != null)
+            CharacterSubrace.text = $"{selectedKingdom} - {selectedSize}";
+    }
+
+    // Remove any previously displayed model
+    private void ClearPreview()
+    {
+        if (PreviewModelSpot == null) return;
+        for (int i = PreviewModelSpot.childCount - 1; i >= 0; i--)
+            Destroy(PreviewModelSpot.GetChild(i).gameObject);
+    }
+
+    // Map (kingdom,size) -> prefab
+    private GameObject GetPrefab(KingdomRace k, CharacterSize s)
+    {
+        switch (k)
+        {
+            case KingdomRace.Bird:
+                return s == CharacterSize.Small ? birdSmall :
+                       s == CharacterSize.Medium ? birdMedium : birdLarge;
+            case KingdomRace.Cat:
+                return s == CharacterSize.Small ? catSmall :
+                       s == CharacterSize.Medium ? catMedium : catLarge;
+            case KingdomRace.Dog:
+                return s == CharacterSize.Small ? dogSmall :
+                       s == CharacterSize.Medium ? dogMedium : dogLarge;
+            case KingdomRace.Reptile:
+                return s == CharacterSize.Small ? reptileSmall :
+                       s == CharacterSize.Medium ? reptileMedium : reptileLarge;
+            case KingdomRace.Monkey:
+                return s == CharacterSize.Small ? monkeySmall :
+                       s == CharacterSize.Medium ? monkeyMedium : monkeyLarge;
+        }
+        return null;
+    }
+
+    private void PopulateSizeThumbnails(KingdomRace k)
+    {
+        if (sizePortraitSlots == null || sizePortraitSlots.Length < 3) return;
+        Sprite small, medium, large;
+
+        switch (k)
+        {
+            case KingdomRace.Bird:
+                small = birdSmallSprite; medium = birdMediumSprite; large = birdLargeSprite; break;
+            case KingdomRace.Cat:
+                small = catSmallSprite; medium = catMediumSprite; large = catLargeSprite; break;
+            case KingdomRace.Dog:
+                small = dogSmallSprite; medium = dogMediumSprite; large = dogLargeSprite; break;
+            case KingdomRace.Reptile:
+                small = reptileSmallSprite; medium = reptileMediumSprite; large = reptileLargeSprite; break;
+            case KingdomRace.Monkey:
+                small = monkeySmallSprite; medium = monkeyMediumSprite; large = monkeyLargeSprite; break;
+            default: return;
+        }
+
+        sizePortraitSlots[0].sprite = small; sizePortraitSlots[0].enabled = small != null;
+        sizePortraitSlots[1].sprite = medium; sizePortraitSlots[1].enabled = medium != null;
+        sizePortraitSlots[2].sprite = large; sizePortraitSlots[2].enabled = large != null;
+    }
+
 }
