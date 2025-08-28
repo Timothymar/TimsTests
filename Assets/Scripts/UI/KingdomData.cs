@@ -44,6 +44,11 @@ public class KingdomData : MonoBehaviour
     private KingdomRace selectedKingdom = KingdomRace.Dog;
     private CharacterSize selectedSize = CharacterSize.Medium;
 
+    [SerializeField] private GameObject ClassSelectorCanvas;
+    [SerializeField] private GameObject ClassOverviewCanvas;
+    [SerializeField] private TMP_Text ClassName;
+    [SerializeField] private TMP_Text ClassInfo;
+
     // ---- UI THUMBNAILS (the 3 images you show on Character Creation) ----
     [SerializeField] private Image[] sizePortraitSlots; // left=Small, middle=Medium, right=Large
 
@@ -93,11 +98,6 @@ public class KingdomData : MonoBehaviour
     // Character Preview
     [SerializeField] private Transform PreviewModelSpot;
 
-    //[SerializeField] private GameObject ClassSelector;
-    //[SerializeField] private GameObject ClassSelectorCanvas;
-    //[SerializeField] private TMP_Text ClassName;
-    //[SerializeField] private TMP_Text ClassInfo;
-
     [SerializeField] private GameObject confirmationPrompt;
 
     private void Start()
@@ -109,6 +109,8 @@ public class KingdomData : MonoBehaviour
         KingdomOverviewCanvas.SetActive(false);
         CharacterSelectorCanvas.SetActive(false);
         CharacterOverviewCanvas.SetActive(false);
+        ClassSelectorCanvas.SetActive(false);
+        ClassOverviewCanvas.SetActive(false);
         confirmationPrompt.SetActive(false);
     }
 
@@ -187,6 +189,8 @@ public class KingdomData : MonoBehaviour
             CharacterSelectorCanvas.SetActive(false);
             CharacterOverviewCanvas.SetActive(false);
             KingdomOverviewCanvas.SetActive(false);
+            ClassSelectorCanvas.SetActive(false);
+            ClassOverviewCanvas.SetActive(false);
             KingdomSelectionCanvas.SetActive(true);
 
             currentStep = CreationStep.KingdomSelection;
@@ -321,10 +325,14 @@ public class KingdomData : MonoBehaviour
             PopulateSizeThumbnails(selectedKingdom); // swap images to Bird/Cat/Dog...
             ClearPreview(); // clear any old model
         }
-        //else if (currentStep == CreationStep.CharacterCreation)
-        //{
-        //    //ClassSelector.SetActive(true);
-        //}
+        else if (currentStep == CreationStep.CharacterCreation)
+        {
+            CharacterSelectorCanvas.SetActive(false);
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
+            KingdomSelectionCanvas.SetActive(false);
+            ClassSelectorCanvas.SetActive(true);
+        }
         //else if (currentStep == CreationStep.ClassSelection)
         //{
         //    // Handle confirm action for other steps
@@ -341,20 +349,6 @@ public class KingdomData : MonoBehaviour
     {
         confirmationPrompt.SetActive(false);
     }
-
-    //private void ShowKingdomSelection()
-    //{
-    //    kingdomSelectionCanvas.SetActive(true);
-    //    characterCustomizationCanvas.SetActive(false);
-    //    currentStep = CreationStep.KingdomSelection;
-    //}
-
-    //private void ShowCharacterCustomization()
-    //{
-    //    kingdomSelectionCanvas.SetActive(false);
-    //    characterCustomizationCanvas.SetActive(true);
-    //    currentStep = CreationStep.CharacterCustomization;
-    //}
 
     // Hook these to your three UI buttons: Small / Medium / Large
     public void OnSelectSmall() { SelectSize(CharacterSize.Small); }
