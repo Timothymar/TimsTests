@@ -30,6 +30,7 @@ public enum CreationStep
 
 public class KingdomData : MonoBehaviour
 {
+    // ---- UI PANELS ----
     [SerializeField] private GameObject KingdomSelectionCanvas;
     [SerializeField] private GameObject KingdomOverviewCanvas;
     [SerializeField] private TMP_Text KingdomTitle;
@@ -101,7 +102,14 @@ public class KingdomData : MonoBehaviour
 
     private void Start()
     {
+        // Show only the Kingdom Selection panel
         KingdomSelectionCanvas.SetActive(true);
+
+        // Make sure all others start hidden
+        KingdomOverviewCanvas.SetActive(false);
+        CharacterSelectorCanvas.SetActive(false);
+        CharacterOverviewCanvas.SetActive(false);
+        confirmationPrompt.SetActive(false);
     }
 
     public void OnKingdomButtonClick(int kingdomIndex)
@@ -174,11 +182,133 @@ public class KingdomData : MonoBehaviour
         }
         else if (currentStep == CreationStep.CharacterCreation)
         {
-            currentStep = CreationStep.KingdomSelection;
+            ClearPreview();
+
             CharacterSelectorCanvas.SetActive(false);
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
             KingdomSelectionCanvas.SetActive(true);
+
+            currentStep = CreationStep.KingdomSelection;
         }
     }
+
+    private void SelectSize(CharacterSize size)
+    {
+        selectedSize = size;
+        SpawnSelectedModel();
+
+        // Call the correct info function
+        switch (selectedKingdom)
+        {
+            case KingdomRace.Dog:
+                GetDogSubraceInfo(size);
+                break;
+            case KingdomRace.Bird:
+                GetBirdSubraceInfo(size);
+                break;
+            case KingdomRace.Cat:
+                GetCatSubraceInfo(size);
+                break;
+            case KingdomRace.Reptile:
+                GetReptileSubraceInfo(size);
+                break;
+            case KingdomRace.Monkey:
+                GetMonkeySubraceInfo(size);
+                break;
+        }
+    }
+    private void GetBirdSubraceInfo(CharacterSize size)
+    {
+        CharacterSubrace.text = $"Bird - {size}";
+        switch (size)
+        {
+            case CharacterSize.Small:
+                CharacterSubraceInfo.text = "Swift and agile.";
+                break;
+            case CharacterSize.Medium:
+                CharacterSubraceInfo.text = "Balanced glider.";
+                break;
+            case CharacterSize.Large:
+                CharacterSubraceInfo.text = "Powerful guardian.";
+                break;
+        }
+        CharacterOverviewCanvas.SetActive(true);
+    }
+
+    private void GetCatSubraceInfo(CharacterSize size)
+    {
+        CharacterSubrace.text = $"Cat - {size}";
+        switch (size)
+        {
+            case CharacterSize.Small:
+                CharacterSubraceInfo.text = "Sneaky scout.";
+                break;
+            case CharacterSize.Medium:
+                CharacterSubraceInfo.text = "Quick striker.";
+                break;
+            case CharacterSize.Large:
+                CharacterSubraceInfo.text = "Tough brawler.";
+                break;
+        }
+        CharacterOverviewCanvas.SetActive(true);
+    }
+
+    private void GetDogSubraceInfo(CharacterSize size)
+    {
+        CharacterSubrace.text = $"Dog - {size}";
+
+        switch (size)
+        {
+            case CharacterSize.Small:
+                CharacterSubraceInfo.text = "Charismatic Yapper.";
+                break;
+            case CharacterSize.Medium:
+                CharacterSubraceInfo.text = "Loyal Chewer.";
+                break;
+            case CharacterSize.Large:
+                CharacterSubraceInfo.text = "Bulky Growler.";
+                break;
+        }
+        CharacterOverviewCanvas.SetActive(true);
+    }
+
+    private void GetReptileSubraceInfo(CharacterSize size)
+    {
+        CharacterSubrace.text = $"Reptile - {size}";
+        switch (size)
+        {
+            case CharacterSize.Small:
+                CharacterSubraceInfo.text = "Slimy Scale.";
+                break;
+            case CharacterSize.Medium:
+                CharacterSubraceInfo.text = "Eccentric Nibbler.";
+                break;
+            case CharacterSize.Large:
+                CharacterSubraceInfo.text = "Hardened Slasher.";
+                break;
+        }
+        CharacterOverviewCanvas.SetActive(true);
+    }
+
+    private void GetMonkeySubraceInfo(CharacterSize size)
+    {
+        CharacterSubrace.text = $"Monkey - {size}";
+        switch (size)
+        {
+            case CharacterSize.Small:
+                CharacterSubraceInfo.text = "Tricky Peanut.";
+                break;
+            case CharacterSize.Medium:
+                CharacterSubraceInfo.text = "Gifted Climber.";
+                break;
+            case CharacterSize.Large:
+                CharacterSubraceInfo.text = "Stoic Boulder.";
+                break;
+        }
+        CharacterOverviewCanvas.SetActive(true);
+    }
+
 
     public void OnConfirm()
     {
@@ -188,8 +318,8 @@ public class KingdomData : MonoBehaviour
             CharacterSelectorCanvas.SetActive(true);
             KingdomSelectionCanvas.SetActive(false);
 
-            PopulateSizeThumbnails(selectedKingdom); // <-- NEW: swap images to Bird/Cat/Dog...
-            ClearPreview(); // optional: clear any old model
+            PopulateSizeThumbnails(selectedKingdom); // swap images to Bird/Cat/Dog...
+            ClearPreview(); // clear any old model
         }
         //else if (currentStep == CreationStep.CharacterCreation)
         //{
@@ -231,12 +361,7 @@ public class KingdomData : MonoBehaviour
     public void OnSelectMedium() { SelectSize(CharacterSize.Medium); }
     public void OnSelectLarge() { SelectSize(CharacterSize.Large); }
 
-    private void SelectSize(CharacterSize size)
-    {
-        selectedSize = size;
-        SpawnSelectedModel();
-    }
-
+   
     // Spawns the prefab that matches (selectedKingdom, selectedSize) at previewAnchor
     private void SpawnSelectedModel()
     {
