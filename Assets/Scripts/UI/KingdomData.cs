@@ -14,6 +14,16 @@ public enum KingdomRace
     Monkey
 }
 
+public enum CharacterClass
+{
+    Scrapper,
+    Pickpocket,
+    Defender,
+    Crafter,
+    Druid,
+    Bard
+}
+
 public enum CharacterSize
 {
     Small,
@@ -24,8 +34,8 @@ public enum CharacterSize
 public enum CreationStep
 {
     KingdomSelection,
-    CharacterCreation
-    //ClassSelection
+    CharacterCreation,
+    ClassSelection
 }
 
 public class KingdomData : MonoBehaviour
@@ -98,7 +108,13 @@ public class KingdomData : MonoBehaviour
     // Character Preview
     [SerializeField] private Transform PreviewModelSpot;
 
-    [SerializeField] private GameObject confirmationPrompt;
+    [SerializeField] private GameObject confirmationExitPrompt;
+
+    [SerializeField] private GameObject confirmationSelectionPrompt;
+    [SerializeField] private TMP_Text selectionConfirmText;
+
+    // Currently selected class
+    private CharacterClass selectedClass = CharacterClass.Scrapper;
 
     private void Start()
     {
@@ -111,7 +127,8 @@ public class KingdomData : MonoBehaviour
         CharacterOverviewCanvas.SetActive(false);
         ClassSelectorCanvas.SetActive(false);
         ClassOverviewCanvas.SetActive(false);
-        confirmationPrompt.SetActive(false);
+        confirmationExitPrompt.SetActive(false);
+        confirmationSelectionPrompt.SetActive(false);
     }
 
     public void OnKingdomButtonClick(int kingdomIndex)
@@ -180,7 +197,7 @@ public class KingdomData : MonoBehaviour
     {
         if (currentStep == CreationStep.KingdomSelection)
         {
-            confirmationPrompt.SetActive(true);
+            confirmationExitPrompt.SetActive(true);
         }
         else if (currentStep == CreationStep.CharacterCreation)
         {
@@ -195,6 +212,60 @@ public class KingdomData : MonoBehaviour
 
             currentStep = CreationStep.KingdomSelection;
         }
+        else if (currentStep == CreationStep.ClassSelection)
+        {
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
+            ClassSelectorCanvas.SetActive(false);
+            ClassOverviewCanvas.SetActive(false);
+            KingdomSelectionCanvas.SetActive(false);
+            CharacterSelectorCanvas.SetActive(true);
+
+            currentStep = CreationStep.CharacterCreation;
+        }
+    }
+
+    public void OnConfirm()
+    {
+        if (currentStep == CreationStep.KingdomSelection)
+        {
+            currentStep = CreationStep.CharacterCreation;
+            CharacterSelectorCanvas.SetActive(true);
+            KingdomSelectionCanvas.SetActive(false);
+
+            PopulateSizeThumbnails(selectedKingdom); // swap images to Bird/Cat/Dog...
+            ClearPreview(); // clear any old model
+        }
+        else if (currentStep == CreationStep.CharacterCreation)
+        {
+            currentStep = CreationStep.ClassSelection;
+            CharacterSelectorCanvas.SetActive(false);
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
+            KingdomSelectionCanvas.SetActive(false);
+
+            ClassSelectorCanvas.SetActive(true);
+            ClassOverviewCanvas.SetActive(false); // hidden until a class is clicked
+        }
+
+        else if (currentStep == CreationStep.ClassSelection)
+        {
+            ShowSelectionConfirmation();
+            // Handle confirm action for other steps
+        }
+    }
+
+    public void ConfirmExit()
+    {
+        confirmationExitPrompt.SetActive(false);
+        KingdomSelectionCanvas.SetActive(false);
+        LevelManager.Instance.LoadMainMenu();
+    }
+
+    public void CancelExit()
+    {
+        confirmationExitPrompt.SetActive(false);
+        confirmationSelectionPrompt.SetActive(false);
     }
 
     private void SelectSize(CharacterSize size)
@@ -313,49 +384,12 @@ public class KingdomData : MonoBehaviour
         CharacterOverviewCanvas.SetActive(true);
     }
 
-
-    public void OnConfirm()
-    {
-      if (currentStep == CreationStep.KingdomSelection)
-        {
-            currentStep = CreationStep.CharacterCreation;
-            CharacterSelectorCanvas.SetActive(true);
-            KingdomSelectionCanvas.SetActive(false);
-
-            PopulateSizeThumbnails(selectedKingdom); // swap images to Bird/Cat/Dog...
-            ClearPreview(); // clear any old model
-        }
-        else if (currentStep == CreationStep.CharacterCreation)
-        {
-            CharacterSelectorCanvas.SetActive(false);
-            CharacterOverviewCanvas.SetActive(false);
-            KingdomOverviewCanvas.SetActive(false);
-            KingdomSelectionCanvas.SetActive(false);
-            ClassSelectorCanvas.SetActive(true);
-        }
-        //else if (currentStep == CreationStep.ClassSelection)
-        //{
-        //    // Handle confirm action for other steps
-        //}
-    }
-    public void ConfirmExit()
-    {
-        confirmationPrompt.SetActive(false);
-        KingdomSelectionCanvas.SetActive(false);
-        LevelManager.Instance.LoadMainMenu();
-    }
-
-    public void CancelExit()
-    {
-        confirmationPrompt.SetActive(false);
-    }
-
     // Hook these to your three UI buttons: Small / Medium / Large
     public void OnSelectSmall() { SelectSize(CharacterSize.Small); }
     public void OnSelectMedium() { SelectSize(CharacterSize.Medium); }
     public void OnSelectLarge() { SelectSize(CharacterSize.Large); }
 
-   
+
     // Spawns the prefab that matches (selectedKingdom, selectedSize) at previewAnchor
     private void SpawnSelectedModel()
     {
@@ -431,4 +465,75 @@ public class KingdomData : MonoBehaviour
         sizePortraitSlots[2].sprite = large; sizePortraitSlots[2].enabled = large != null;
     }
 
+    public void OnClassButtonClick(int classIndex)
+    {
+        selectedClass = (CharacterClass)classIndex;
+        SelectClass(selectedClass);
+    }
+    private void SelectClass(CharacterClass c)
+    {
+        // Update the right-side panel text
+        switch (c)
+        {
+            case CharacterClass.Scrapper: SetScrapperInfo(); break;
+            case CharacterClass.Pickpocket: SetPickpocketInfo(); break;
+            case CharacterClass.Defender: SetDefenderInfo(); break;
+            case CharacterClass.Crafter: SetCrafterInfo(); break;
+            case CharacterClass.Druid: SetDruidInfo(); break;
+            case CharacterClass.Bard: SetBardInfo(); break;
+        }
+
+        // Make sure the overview is visible on selection
+        ClassOverviewCanvas.SetActive(true);
+    }
+
+    private void SetScrapperInfo()
+    {
+        ClassName.text = "Scrapper";
+        ClassInfo.text = "Frontline fighter. High defense and melee damage. Str based damager";
+    }
+    private void SetPickpocketInfo()
+    {
+        ClassName.text = "Pickpocket";
+        ClassInfo.text = "Stealthy striker. Crits, evasion, and traps. Dex based damager";
+    }
+    private void SetDefenderInfo()
+    {
+        ClassName.text = "Defender";
+        ClassInfo.text = "Heavy defender. Tanky with any sheild. Con based damager";
+    }
+    private void SetCrafterInfo()
+    {
+        ClassName.text = "Crafter";
+        ClassInfo.text = "Gadgets and turrets. Controls space and utilities. Int based damager";
+    }
+    private void SetDruidInfo()
+    {
+        ClassName.text = "Druid";
+        ClassInfo.text = "Nature caster. Heals, dots, and shapeshifts. Wis based damager";
+    }
+    private void SetBardInfo()
+    {
+        ClassName.text = "Bard";
+        ClassInfo.text = "Buffs & debuffs through music. Team enabler. Cha based damager";
+    }
+
+    private void ShowSelectionConfirmation()
+    {
+        // Only kingdom + class (no size, no blurbs)
+        string kingdom = selectedKingdom.ToString();          // e.g., "Dog"
+        string cls = selectedClass.ToString();            // e.g., "Scrapper"
+
+        if (selectionConfirmText != null)
+            selectionConfirmText.text = $"Are you sure you want to be a {cls} from the {kingdom} kingdom?";
+
+        confirmationSelectionPrompt.SetActive(true);
+    }
+
+    // Hook these to the Yes/No buttons on the confirmationSelectionPrompt:
+    public void OnSelectionConfirmYes()
+    {
+        confirmationSelectionPrompt.SetActive(false);
+        // TODO: proceed (save choices, load next scene, etc.)
+    }
 }
