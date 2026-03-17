@@ -35,7 +35,8 @@ public enum CreationStep
 {
     KingdomSelection,
     CharacterCreation,
-    ClassSelection
+    ClassSelection,
+    StatAllocation
 }
 
 public class KingdomData : MonoBehaviour
@@ -58,6 +59,8 @@ public class KingdomData : MonoBehaviour
     [SerializeField] private GameObject ClassOverviewCanvas;
     [SerializeField] private TMP_Text ClassName;
     [SerializeField] private TMP_Text ClassInfo;
+
+    [SerializeField] private GameObject StatAllocationCanvas;
 
     // ---- UI THUMBNAILS (the 3 images you show on Character Creation) ----
     [SerializeField] private Image[] sizePortraitSlots; // left=Small, middle=Medium, right=Large
@@ -208,6 +211,7 @@ public class KingdomData : MonoBehaviour
             KingdomOverviewCanvas.SetActive(false);
             ClassSelectorCanvas.SetActive(false);
             ClassOverviewCanvas.SetActive(false);
+            StatAllocationCanvas.SetActive(false);
             KingdomSelectionCanvas.SetActive(true);
 
             currentStep = CreationStep.KingdomSelection;
@@ -219,9 +223,22 @@ public class KingdomData : MonoBehaviour
             ClassSelectorCanvas.SetActive(false);
             ClassOverviewCanvas.SetActive(false);
             KingdomSelectionCanvas.SetActive(false);
+            StatAllocationCanvas.SetActive(false);
             CharacterSelectorCanvas.SetActive(true);
 
             currentStep = CreationStep.CharacterCreation;
+        }
+        else if (currentStep == CreationStep.StatAllocation)
+        {
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
+            ClassSelectorCanvas.SetActive(false);
+            ClassOverviewCanvas.SetActive(false);
+            KingdomSelectionCanvas.SetActive(false);
+            CharacterSelectorCanvas.SetActive(false);
+            StatAllocationCanvas.SetActive(true);
+
+            currentStep = CreationStep.StatAllocation;
         }
     }
 
