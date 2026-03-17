@@ -36,7 +36,15 @@ public enum CreationStep
     KingdomSelection,
     CharacterCreation,
     ClassSelection,
-    StatAllocation
+    StatAllocation,
+    CharacterOverview
+}
+
+public enum StatGenerationMethod
+{
+    PointBuy,
+    StandardArray,
+    FreeSelection
 }
 
 public class KingdomData : MonoBehaviour
@@ -54,6 +62,7 @@ public class KingdomData : MonoBehaviour
 
     private KingdomRace selectedKingdom = KingdomRace.Dog;
     private CharacterSize selectedSize = CharacterSize.Medium;
+    private StatGenerationMethod selectedStatMethod = StatGenerationMethod.PointBuy;
 
     [SerializeField] private GameObject ClassSelectorCanvas;
     [SerializeField] private GameObject ClassOverviewCanvas;
@@ -61,6 +70,17 @@ public class KingdomData : MonoBehaviour
     [SerializeField] private TMP_Text ClassInfo;
 
     [SerializeField] private GameObject StatAllocationCanvas;
+    [SerializeField] private GameObject statScreen;
+    [SerializeField] private TMP_Text[] abilityTexts;
+    [SerializeField] private TMP_Text[] modifierTexts;
+    [SerializeField] private GameObject[] plusButtons;
+    [SerializeField] private GameObject[] minusButtons;
+    [SerializeField] private GameObject[] upButtons;
+    [SerializeField] private GameObject[] downButtons;
+
+    private int[] statValues = new int[6] { 10, 10, 10, 10, 10, 10 };
+
+    [SerializeField] private GameObject CharacterConfirmationCanvas;
 
     // ---- UI THUMBNAILS (the 3 images you show on Character Creation) ----
     [SerializeField] private Image[] sizePortraitSlots; // left=Small, middle=Medium, right=Large
@@ -132,6 +152,9 @@ public class KingdomData : MonoBehaviour
         ClassOverviewCanvas.SetActive(false);
         confirmationExitPrompt.SetActive(false);
         confirmationSelectionPrompt.SetActive(false);
+        
+        UpdateStatControlVisibility();
+        UpdateAllStatsUI();
     }
 
     public void OnKingdomButtonClick(int kingdomIndex)
@@ -235,9 +258,21 @@ public class KingdomData : MonoBehaviour
             ClassSelectorCanvas.SetActive(false);
             ClassOverviewCanvas.SetActive(false);
             KingdomSelectionCanvas.SetActive(false);
+            CharacterSelectorCanvas.SetActive(true);
+            StatAllocationCanvas.SetActive(false);
+
+            currentStep = CreationStep.ClassSelection;
+        }
+        else if (currentStep == CreationStep.CharacterOverview)
+        {
+            CharacterOverviewCanvas.SetActive(false);
+            KingdomOverviewCanvas.SetActive(false);
+            ClassSelectorCanvas.SetActive(false);
+            ClassOverviewCanvas.SetActive(false);
+            KingdomSelectionCanvas.SetActive(false);
             CharacterSelectorCanvas.SetActive(false);
             StatAllocationCanvas.SetActive(true);
-
+            CharacterConfirmationCanvas.SetActive(false);
             currentStep = CreationStep.StatAllocation;
         }
     }
@@ -267,8 +302,26 @@ public class KingdomData : MonoBehaviour
 
         else if (currentStep == CreationStep.ClassSelection)
         {
+            currentStep = CreationStep.StatAllocation;
+
+            ClassSelectorCanvas.SetActive(false);
+            ClassOverviewCanvas.SetActive(false);
+
+            StatAllocationCanvas.SetActive(true);
+        }
+
+        else if (currentStep == CreationStep.StatAllocation)
+        {
+            currentStep = CreationStep.CharacterOverview;
+
+            StatAllocationCanvas.SetActive(false);
+            CharacterConfirmationCanvas.SetActive(true);
+        }
+
+        else if (currentStep == CreationStep.CharacterOverview)
+        {
+            confirmationSelectionPrompt.SetActive(true);
             ShowSelectionConfirmation();
-            // Handle confirm action for other steps
         }
     }
 
@@ -552,5 +605,157 @@ public class KingdomData : MonoBehaviour
     {
         confirmationSelectionPrompt.SetActive(false);
         // TODO: proceed (save choices, load next scene, etc.)
+    }
+
+    public void SelectPointBuy()
+    {
+        selectedStatMethod = StatGenerationMethod.PointBuy;
+
+        statValues[0] = 10;
+        statValues[1] = 10;
+        statValues[2] = 10;
+        statValues[3] = 10;
+        statValues[4] = 10;
+        statValues[5] = 10;
+
+        UpdateAllStatsUI();
+        UpdateStatControlVisibility();
+        statScreen.SetActive(true);
+        Debug.Log("Selected Stat Method: " + selectedStatMethod);
+    }
+
+    public void SelectStandardArray()
+    {
+        selectedStatMethod = StatGenerationMethod.StandardArray;
+        UpdateStatControlVisibility();
+        SetStandardArrayDefaults();
+        statScreen.SetActive(true);
+        Debug.Log("Selected Stat Method: " + selectedStatMethod);
+    }
+
+    public void SelectFreeSelection()
+    {
+        selectedStatMethod = StatGenerationMethod.FreeSelection;
+
+        statValues[0] = 10;
+        statValues[1] = 10;
+        statValues[2] = 10;
+        statValues[3] = 10;
+        statValues[4] = 10;
+        statValues[5] = 10;
+
+        UpdateAllStatsUI();
+        UpdateStatControlVisibility();
+        statScreen.SetActive(true);
+        Debug.Log("Selected Stat Method: " + selectedStatMethod);
+    }
+
+    private int GetModifier(int score)
+    {
+        return Mathf.FloorToInt((score - 10) / 2f);
+    }
+
+    private string FormatModifier(int modifier)
+    {
+        return modifier >= 0 ? $"+{modifier}" : modifier.ToString();
+    }
+
+    private void UpdateStatUI(int statIndex)
+    {
+        if (abilityTexts != null && statIndex >= 0 && statIndex < abilityTexts.Length)
+            abilityTexts[statIndex].text = statValues[statIndex].ToString();
+
+        if (modifierTexts != null && statIndex >= 0 && statIndex < modifierTexts.Length)
+            modifierTexts[statIndex].text = FormatModifier(GetModifier(statValues[statIndex]));
+    }
+
+    private void UpdateAllStatsUI()
+    {
+        for (int i = 0; i < statValues.Length; i++)
+        {
+            UpdateStatUI(i);
+        }
+    }
+
+    public void OnStatPlus(int statIndex)
+    {
+        if (selectedStatMethod == StatGenerationMethod.StandardArray) return;
+
+        statValues[statIndex]++;
+        UpdateStatUI(statIndex);
+    }
+
+    public void OnStatMinus(int statIndex)
+    {
+        if (selectedStatMethod == StatGenerationMethod.StandardArray) return;
+
+        statValues[statIndex]--;
+        UpdateStatUI(statIndex);
+    }
+    public void OnStatUp(int statIndex)
+    {
+        if (selectedStatMethod != StatGenerationMethod.StandardArray) return;
+        if (statIndex <= 0) return;
+
+        SwapStats(statIndex, statIndex - 1);
+    }
+
+    public void OnStatDown(int statIndex)
+    {
+        if (selectedStatMethod != StatGenerationMethod.StandardArray) return;
+        if (statIndex >= statValues.Length - 1) return;
+
+        SwapStats(statIndex, statIndex + 1);
+    }
+
+    private void SwapStats(int firstIndex, int secondIndex)
+    {
+        int temp = statValues[firstIndex];
+        statValues[firstIndex] = statValues[secondIndex];
+        statValues[secondIndex] = temp;
+
+        UpdateStatUI(firstIndex);
+        UpdateStatUI(secondIndex);
+    }
+    private void SetStandardArrayDefaults()
+    {
+        statValues[0] = 18;
+        statValues[1] = 16;
+        statValues[2] = 14;
+        statValues[3] = 12;
+        statValues[4] = 10;
+        statValues[5] = 10;
+
+        UpdateAllStatsUI();
+    }
+    private void UpdateStatControlVisibility()
+    {
+        bool isStandardArray = selectedStatMethod == StatGenerationMethod.StandardArray;
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (plusButtons != null && i < plusButtons.Length && plusButtons[i] != null)
+                plusButtons[i].SetActive(!isStandardArray);
+
+            if (minusButtons != null && i < minusButtons.Length && minusButtons[i] != null)
+                minusButtons[i].SetActive(!isStandardArray);
+
+            if (upButtons != null && i < upButtons.Length && upButtons[i] != null)
+                upButtons[i].SetActive(isStandardArray);
+
+            if (downButtons != null && i < downButtons.Length && downButtons[i] != null)
+                downButtons[i].SetActive(isStandardArray);
+        }
+
+        if (isStandardArray)
+        {
+            // top row can't go up
+            if (upButtons != null && upButtons.Length > 0 && upButtons[0] != null)
+                upButtons[0].SetActive(false);
+
+            // bottom row can't go down
+            if (downButtons != null && downButtons.Length > 5 && downButtons[5] != null)
+                downButtons[5].SetActive(false);
+        }
     }
 }
